@@ -16,8 +16,21 @@ public class ResponseEntity<M> {
     private String message;
     private M data;
     private String img;
+    private int nowPage;
+    private int totalPage;
+
 
     public ResponseEntity(){}
+
+    public static<M> ResponseEntity success(int nowPage,int totalPage,String img,M m) {
+        ResponseEntity responseEntity = new ResponseEntity();
+        responseEntity.setStatus(0);
+        responseEntity.setData(m);
+        responseEntity.setImg(img);
+        responseEntity.setNowPage(nowPage);
+        responseEntity.setTotalPage(totalPage);
+        return responseEntity;
+    }
 
     public static<M> ResponseEntity success(String img,M m) {
         ResponseEntity responseEntity = new ResponseEntity();
