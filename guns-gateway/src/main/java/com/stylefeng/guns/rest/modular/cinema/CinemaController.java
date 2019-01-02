@@ -4,10 +4,12 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.stylefeng.guns.cinema.CinemaAPI;
 import com.stylefeng.guns.cinema.vo.*;
+import com.stylefeng.guns.order.OrderAPI;
 import com.stylefeng.guns.rest.modular.VO.ResponseEntity;
 import com.stylefeng.guns.rest.modular.cinema.vo.CinemaConditionResponseVO;
 import com.stylefeng.guns.rest.modular.cinema.vo.CinemaFieldResponseVO;
 import com.stylefeng.guns.rest.modular.cinema.vo.CinemaFieldsResponseVO;
+import com.sun.org.apache.xpath.internal.operations.Or;
 import lombok.extern.log4j.Log4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +29,10 @@ import java.util.List;
 public class CinemaController {
     private static final String IMG = "http://img:maoyan.com";
 
-    @Reference(interfaceClass = CinemaAPI.class,cache = "lru",connections = 10,check = false)
+    @Reference(interfaceClass = CinemaAPI.class,cache = "lru",check = false)
     CinemaAPI cinemaAPI;
+    @Reference(interfaceClass = OrderAPI.class,check = false)
+    OrderAPI orderAPI;
 
     @GetMapping("getCinemas")
     public ResponseEntity getCinemas(CinemaQueryVO cinemaQueryVO) {
@@ -105,8 +109,8 @@ public class CinemaController {
             FilmInfoVO filmInfoByFieldId = cinemaAPI.getFilmInfoByFieldId(fieldId);
             HallInfoVO filmFieldInfo = cinemaAPI.getFilmFieldInfo(fieldId);
 
-            //TODO: 造几个销售的假数据，后续会对接订单接口
-            filmFieldInfo.setSoldSeats("1,2,3");
+            //根据fieldId 获取所有已经销售的座位编号
+            filmFieldInfo.setSoldSeats(orderAPI.getSoldSeatsByFieldId(fieldId));
 
             CinemaFieldResponseVO cinemaFieldResponseVO = new CinemaFieldResponseVO();
             cinemaFieldResponseVO.setCinemaInfo(cinemaInfoById);

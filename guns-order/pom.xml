@@ -4,12 +4,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.stylefeng.guns</groupId>
-    <artifactId>guns-cinema</artifactId>
+    <artifactId>guns-order</artifactId>
     <version>0.0.1</version>
     <packaging>jar</packaging>
 
-    <name>guns-cinema</name>
-    <description>guns 影院服务模块</description>
+    <name>guns-order</name>
+    <description>guns 订单服务模块</description>
 
     <parent>
         <groupId>com.stylefeng</groupId>
@@ -61,6 +61,10 @@
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
     </dependencies>
 
