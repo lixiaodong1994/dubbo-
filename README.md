@@ -249,6 +249,133 @@ spring:
 
 
 
+### 订单模块
+
+#### 章节概要
+
+- 完成订单莫i快业务开发
+- 完成限流和熔断、降级相关内容
+- Dubbo特性之分组聚合和版本控制
+
+
+
+### ftp 读取文件信息
+
+#### 在win10系统上安装ftp服务器
+
+```html
+https://jingyan.baidu.com/article/3a2f7c2e32f40e26afd611c0.html
+```
+
+#### ftp工具类
+
+```java
+package com.stylefeng.guns.rest.common.util;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTPClient;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+/**
+ * @ClassName FTPUtil
+ * @Description FTP工具类
+ * @Author lxd
+ * @Date 2019/1/2 10:31
+ **/
+@Slf4j
+@Data
+@Configuration
+@ConfigurationProperties(prefix = "ftp")
+public class FTPUtil {
+    // 地址 端口 用户名 密码
+    private String hostName;
+    private Integer port;
+    private String userName;
+    private String password;
+
+    private FTPClient ftpClient = null;
+
+    private void initFTPClient(){
+        try{
+            ftpClient = new FTPClient();
+            ftpClient.setControlEncoding("utf-8");
+            ftpClient.connect(hostName,port);
+            ftpClient.login(userName,password);
+        }catch (Exception e){
+            log.error("初始化FTP失败",e);
+        }
+    }
+
+    // 输入一个路径，然后将路径里的文件转换成字符串返回
+    public String getFileContentByAddress(String path) {
+        BufferedReader bufferedReader = null;
+        try{
+            initFTPClient();
+            bufferedReader = new BufferedReader(new InputStreamReader(ftpClient.retrieveFileStream(path)));
+            StringBuffer stringBuffer = new StringBuffer();
+            while (true) {
+                String str = bufferedReader.readLine();
+                if (str == null) {
+                    break;
+                }
+                stringBuffer.append(str);
+            }
+            ftpClient.logout();
+            return stringBuffer.toString();
+        }catch (Exception ex) {
+            log.error("获取文件失败",ex);
+        }finally {
+            try {
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public static void main(String[] args) {
+        FTPUtil ftpUtil = new FTPUtil();
+        String fileStrByAddress = ftpUtil.getFileContentByAddress("seats/cgs.json");
+
+        System.out.println(fileStrByAddress);
+    }
+
+}
+
+```
+
+#### 在yum文件中配置
+
+```properties
+ftp:
+  host-name: 192.168.2.246
+  port: 21
+  user-name: ftp
+  password: 123456
+```
+
+
+
+### 科学计算法（四舍五入）
+
+```java
+private static double coutPrice(int sourts,double price) {
+        BigDecimal sourtsDeci = new BigDecimal(sourts);
+        BigDecimal priceDeci = new BigDecimal(price);
+
+        BigDecimal result = sourtsDeci.multiply(priceDeci);
+        double finalResult = result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        return finalResult;
+    }
+```
+
+
+
 
 
 
