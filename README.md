@@ -374,9 +374,291 @@ private static double coutPrice(int sourts,double price) {
     }
 ```
 
+### 订单模块问题
 
+- 订单模块的横向和纵向拆表解决
+- 服务限流操作处理
+- 服务熔断和降级
+- 保证多版本的蓝绿上线
 
+### 分组合并
 
+- 生成对应实体类和mapper文件
+- 同样实现接口，但需要加一个注解
 
+```java
+@Slf4j
+@Component
+@Service(interfaceClass = OrderAPI.class,group = "order2017")
+public class OrderServiceImpl2017 implements OrderAPI {
 
+    @Autowired
+    private MoocOrder2017TMapper moocOrder2017TMapper;
+}
+```
+
+```java
+@Slf4j
+@Component
+@Service(interfaceClass = OrderAPI.class,group = "order2018")
+public class OrderServiceImpl2018 implements OrderAPI {
+
+    @Autowired
+    private MoocOrder2018TMapper moocOrder2018TMapper;
+}
+```
+
+- controller层，对分层数据进行聚合
+
+```java
+@Slf4j
+@RestController
+@RequestMapping("/order")
+public class OrderController {
+
+    @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2018")
+    OrderAPI orderAPI;
+    @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2017")
+    OrderAPI orderAPI2017;
+
+    /**
+        购票模块
+     * @param fieldId
+     * @param soldSeats
+     * @param seatsName
+     * @return
+     */
+    @PostMapping("buyTickets")
+    public ResponseEntity buyTickets(Integer fieldId,String soldSeats,String seatsName) {
+
+        //验证售出的票是否为真
+        boolean isTrue = orderAPI.isTrueSeats(fieldId + "", soldSeats);
+        if (!isTrue) {
+            log.error("售出的票不为真");
+            return ResponseEntity.serviceFail("售出的票不为真");
+        }
+        //已经销售的座位里，有没有这些座位
+        boolean isNotSold = orderAPI.isNotSoldSeats(fieldId + "", soldSeats);
+        if (!isNotSold) {
+            log.error("售出的票已经存在");
+            return ResponseEntity.serviceFail("售出的票已经存在");
+        }
+        //创建订单，注意获取登陆人
+        if (isTrue && isNotSold) {
+            //只有都为true，才创建订单
+            String userId = CurrentUser.getUserInfo();
+            if (userId == null && userId.trim().length() <= 0) {
+                log.error("用户未登陆");
+                return ResponseEntity.serviceFail("用户未登陆");
+            }
+
+            OrderVO orderVO = orderAPI.saveOrderInfo(fieldId, soldSeats, seatsName, Integer.parseInt(userId));
+            if (orderVO == null) {
+                log.error("购票失败");
+                return ResponseEntity.serviceFail("购票业务错误");
+            }else {
+                return ResponseEntity.success(orderVO);
+            }
+        }else{
+            return ResponseEntity.serviceFail("订单中的座位编号有问题");
+        }
+    }
+
+    /**
+     * 获取订单信息
+     * @param nowPage
+     * @param pageSize
+     * @return
+     */
+    @PostMapping("getOrderInfo")
+    public ResponseEntity getOrderInfo(@RequestParam(name = "nowPage",required = false,defaultValue = "1") Integer nowPage,
+                                       @RequestParam(name = "pageSize",required = false,defaultValue = "5") Integer pageSize) {
+
+        String userId = CurrentUser.getUserInfo();
+
+        Page<OrderVO> page = new Page<>(nowPage,pageSize);
+        if (userId != null && userId.trim().length() > 0) {
+            Page<OrderVO> result = orderAPI.getOrderByUserId(Integer.parseInt(userId), page);
+            Page<OrderVO> result2017 = orderAPI2017.getOrderByUserId(Integer.parseInt(userId), page);
+            int totalPages = (int) (result.getPages()+result2017.getPages());
+
+            //整合两个结果
+            List<OrderVO> resultList = new ArrayList<>();
+            resultList.addAll(result.getRecords());
+            resultList.addAll(result2017.getRecords());
+
+            return ResponseEntity.success(nowPage,totalPages,"",resultList);
+        }else {
+           // log.error("用户未登陆");
+            return ResponseEntity.serviceFail("用户未登陆");
+        }
+    }
+```
+
+### 限流操作
+
+> 使用令牌桶来实现限流操作
+
+- 创建一个令牌桶的类
+
+```java
+package com.stylefeng.guns.core.util;
+
+/**
+ * @ClassName TokenBucket
+ * @Description 令牌桶
+ * @Author lxd
+ * @Date 2019/1/4 13:52
+ **/
+public class TokenBucket {
+
+    private int bucketNums = 100; //桶的容量
+    private int rate = 1;           //流入速度
+    private int nowTokens;          //当前令牌数量
+    private long timestamp = getNowTime();     //当前时间
+
+    //获取当前时间
+    private long getNowTime() {
+        return System.currentTimeMillis();
+    }
+
+    private int min(int tokens) {
+        if (bucketNums > tokens) {
+            //令牌数量还没有超过桶
+            return tokens;
+        }else {
+            //令牌数量超过桶，则返回桶
+            return bucketNums;
+        }
+    }
+
+    public boolean getToken() {
+        //记录拿令牌的时间
+        long nowTime = getNowTime();
+        //添加令牌【判断有多少个令牌】
+        nowTokens = nowTokens + (int)((nowTime - timestamp)*rate);
+        //添加以后的令牌数量与桶的容量哪个小
+        nowTokens = min(nowTokens);
+        //修改拿令牌的时间
+        timestamp = nowTime;
+        //判断令牌是否足够
+        if (nowTokens < 1) {
+            return false;
+        }else {
+            return true;
+        }
+    }
+}
+
+```
+
+- 在业务中进行限流控制
+
+```java
+//判断人数是否过多
+        if (tokenBucket.getToken()) {
+            //验证售出的票是否为真
+            boolean isTrue = orderAPI.isTrueSeats(fieldId + "", soldSeats);
+            if (!isTrue) {
+                log.error("售出的票不为真");
+                return ResponseEntity.serviceFail("售出的票不为真");
+            }
+            //已经销售的座位里，有没有这些座位
+            boolean isNotSold = orderAPI.isNotSoldSeats(fieldId + "", soldSeats);
+            if (!isNotSold) {
+                log.error("售出的票已经存在");
+                return ResponseEntity.serviceFail("售出的票已经存在");
+            }
+            //创建订单，注意获取登陆人
+            if (isTrue && isNotSold) {
+                //只有都为true，才创建订单
+                String userId = CurrentUser.getUserInfo();
+                if (userId == null && userId.trim().length() <= 0) {
+                    log.error("用户未登陆");
+                    return ResponseEntity.serviceFail("用户未登陆");
+                }
+
+                OrderVO orderVO = orderAPI.saveOrderInfo(fieldId, soldSeats, seatsName, Integer.parseInt(userId));
+                if (orderVO == null) {
+                    log.error("购票失败");
+                    return ResponseEntity.serviceFail("购票业务错误");
+                } else {
+                    return ResponseEntity.success(orderVO);
+                }
+            } else {
+                return ResponseEntity.serviceFail("订单中的座位编号有问题");
+            }
+        }else {
+            return ResponseEntity.serviceFail("购买人数过多，请稍后再试！！！");
+        }
+```
+
+### 熔断器
+
+- 加入依赖
+
+```java
+<dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+            <version>2.0.0.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+            <version>2.0.0.RELEASE</version>
+        </dependency>
+```
+
+- 在启动类上面加上注解
+
+```java
+@SpringBootApplication(scanBasePackages = {"com.stylefeng.guns"})
+@EnableAsync
+@EnableDubboConfiguration
+@EnableHystrixDashboard
+@EnableCircuitBreaker
+@EnableHystrix
+public class GatewayApplication {
+
+    public static void main(String[] args) {
+
+        SpringApplication.run(GatewayApplication.class, args);
+    }
+}
+```
+
+- 哪个方法需要熔断器，就在那个方法上面加上注解
+
+```java
+@HystrixCommand(fallbackMethod = "error", commandProperties = {
+            @HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
+            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50")},
+            threadPoolProperties = {
+                    @HystrixProperty(name = "coreSize", value = "1"),
+                    @HystrixProperty(name = "maxQueueSize", value = "10"),
+                    @HystrixProperty(name = "keepAliveTimeMinutes", value = "1000"),
+                    @HystrixProperty(name = "queueSizeRejectionThreshold", value = "8"),
+                    @HystrixProperty(name = "metrics.rollingStats.numBuckets", value = "12"),
+                    @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "1500")
+            })
+```
+
+- 然后写一个熔断器对应的方法（返回类型和参数保持一样）
+
+```java
+public ResponseEntity error(Integer fieldId,String soldSeats,String seatsName){
+        return ResponseEntity.serviceFail("抱歉，下单的人太多了，请稍后重试");
+    }
+```
+
+> 注意：如果使用ThreadLocal线程保存用户信息，使用熔断器后，会改变线程而不会保存用户信息，这样就是取不到用户信息，报错。
+>
+> 解决办法：将ThreadLocal换成InheritableThreadLocal，InheritableThreadLocal可以再线程改变的时候可以保存用户信息。
 
