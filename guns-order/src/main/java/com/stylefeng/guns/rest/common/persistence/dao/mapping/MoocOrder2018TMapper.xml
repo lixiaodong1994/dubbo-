@@ -17,4 +17,61 @@
         <result column="order_status" property="orderStatus" />
     </resultMap>
 
+
+    <select id="getSeatsByFieldId" parameterType="java.lang.String" resultType="java.lang.String">
+        SELECT
+          seat_address AS seatAddress
+        FROM
+          mooc_field_t f,
+          mooc_hall_dict_t d
+        WHERE f.`hall_id` = d.`UUID`
+          AND f.`UUID` = #{fieldId}
+    </select>
+
+
+    <select id="getOrderInfoById" parameterType="java.lang.String" resultType="com.stylefeng.guns.order.vo.OrderVO">
+        SELECT
+          o.`UUID` AS orderId,
+          h.`film_name` AS filmName,
+          CONCAT(DATE_FORMAT(o.`order_time`,'%y年%m月%d日'),' ',f.`begin_time`) AS fieldTime,
+          c.`cinema_name` AS cinemaName,
+          o.`seats_name` AS seatsName,
+          o.`order_price` AS orderPrice,
+          UNIX_TIMESTAMP(o.`order_time`) AS orderTimestamp
+        FROM
+          mooc_order_2018_t o,
+          mooc_field_t f,
+          mooc_hall_film_info_t h,
+          mooc_cinema_t c
+        WHERE o.`cinema_id` = c.`UUID`
+          AND o.`field_id` = f.`UUID`
+          AND o.`film_id` = h.`film_id`
+          AND o.`UUID` = #{orderId}
+    </select>
+
+
+    <select id="getOrdersByUserId" parameterType="java.lang.Integer" resultType="com.stylefeng.guns.order.vo.OrderVO">
+        SELECT
+          o.`UUID` AS orderId,
+          h.`film_name` AS filmName,
+          CONCAT(DATE_FORMAT(o.`order_time`,'%y年%m月%d日'),' ',f.`begin_time`) AS fieldTime,
+          c.`cinema_name` AS cinemaName,
+          o.`seats_name` AS seatsName,
+          o.`order_price` AS orderPrice,
+          UNIX_TIMESTAMP(o.`order_time`) AS orderTimestamp
+        FROM
+          mooc_order_2018_t o,
+          mooc_field_t f,
+          mooc_hall_film_info_t h,
+          mooc_cinema_t c
+        WHERE o.`cinema_id` = c.`UUID`
+          AND o.`field_id` = f.`UUID`
+          AND o.`film_id` = h.`film_id`
+          AND o.`order_user` = #{userId}
+    </select>
+
+    <select id="getSoldSeatsByFieldId" parameterType="java.lang.Integer" resultType="java.lang.String">
+        SELECT GROUP_CONCAT(seats_ids) FROM mooc_order_2018_t where field_id=#{fieldId}
+    </select>
+
 </mapper>
