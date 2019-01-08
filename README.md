@@ -662,3 +662,211 @@ public ResponseEntity error(Integer fieldId,String soldSeats,String seatsName){
 >
 > 解决办法：将ThreadLocal换成InheritableThreadLocal，InheritableThreadLocal可以再线程改变的时候可以保存用户信息。
 
+### 支付操作
+
+#### 支付流程
+
+获取二维码 -》 等待支付宝回调 -》 修改订单状态 -》 定期对账
+
+
+
+### ftp 上传和下载文件工具类
+
+https://www.cnblogs.com/yingyujyf/p/6933823.html
+
+### ftp类
+
+```java
+package com.stylefeng.guns.rest.common.util;
+
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTPClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+import java.io.*;
+
+@Slf4j
+@Data
+@Configuration
+@ConfigurationProperties(prefix = "ftp")
+public class FTPUtil {
+
+    // 地址 端口 用户名 密码
+    private String hostName;
+    private Integer port;
+    private String userName;
+    private String password;
+    private String uploadPath;
+
+    private FTPClient ftpClient = null;
+
+    private void initFTPClient(){
+        try{
+            ftpClient = new FTPClient();
+            ftpClient.setControlEncoding("utf-8");
+            ftpClient.connect(hostName,port);
+            ftpClient.login(userName,password);
+        }catch (Exception e){
+            log.error("初始化FTP失败",e);
+        }
+    }
+
+    // 输入一个路径，然后将路径里的文件转换成字符串返回给我
+    public String getFileStrByAddress(String fileAddress){
+        BufferedReader bufferedReader = null;
+        try{
+            initFTPClient();
+            bufferedReader = new BufferedReader(
+                    new InputStreamReader(
+                            ftpClient.retrieveFileStream(fileAddress))
+            );
+
+            StringBuffer stringBuffer = new StringBuffer();
+            while(true){
+                String lineStr = bufferedReader.readLine();
+                if(lineStr == null){
+                    break;
+                }
+                stringBuffer.append(lineStr);
+            }
+
+            ftpClient.logout();
+            return stringBuffer.toString();
+        }catch (Exception e){
+            log.error("获取文件信息失败",e);
+        }finally {
+            try {
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    // 上传FTP文件
+    public boolean uploadFile(String fileName,File file) {
+        FileInputStream fileInputStream = null;
+        try{
+            fileInputStream = new FileInputStream(file);
+
+            // FTP相关内容
+            initFTPClient();
+            // 设置FTP的关键参数
+            ftpClient.setControlEncoding("utf-8");
+            ftpClient.setFileType(FTPClient.BINARY_FILE_TYPE);
+            ftpClient.enterLocalPassiveMode();
+
+            // 将ftpClient的工作空间修改
+            ftpClient.changeWorkingDirectory(uploadPath);
+
+            // 上传文件
+            ftpClient.storeFile(new String(fileName.getBytes("GBK"),"iso-8859-1"),fileInputStream);
+
+            return true;
+        }catch (Exception e){
+            log.error("上传失败",e);
+            return false;
+        }finally {
+            try {
+                fileInputStream.close();
+                ftpClient.logout();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+}
+
+```
+
+### 本地存根
+
+> 没有使用本地存根的时候，consumer直接调用serviceimpl接口；
+>
+> 当使用本地存根的时候，consumer调用xxxServiceStub,然后stub调用proxy代理（dubbo），使用代理去调用对应的接口和实现类   
+
+### dubbo 自带的服务降级
+
+- 降级类
+
+```java
+package com.stylefeng.guns.alipay;
+
+import com.stylefeng.guns.alipay.vo.AliPayInfoVO;
+import com.stylefeng.guns.alipay.vo.AliPayResultVO;
+
+
+/*
+    业务降级方法
+ */
+public class AliPayServiceMock implements AlipayAPI{
+    @Override
+    public AliPayInfoVO getQRCode(String orderId) {
+        return null;
+    }
+
+    @Override
+    public AliPayResultVO getOrderStatus(String orderId) {
+
+        AliPayResultVO aliPayResultVO = new AliPayResultVO();
+        aliPayResultVO.setOrderId(orderId);
+        aliPayResultVO.setOrderStatus(0);
+        aliPayResultVO.setOrderMsg("尚未支付成功");
+
+        return aliPayResultVO;
+    }
+}
+
+```
+
+- 在实现类上加上mock
+
+```java
+@Service(interfaceClass = AlipayAPI.class,mock = "com.stylefeng.guns.alipay.AliPayServiceMock")
+```
+
+> 当程序发生错误的时候，mock降级类会执行；
+>
+> 当stub 和 mock 同时配置的时候，先执行stub，当stub发生错误的时候，mock会执行； 
+
+
+
+### dubbo 的隐式传递
+
+```java
+ //dubbo的隐式传递
+ RpcContext.getContext().setAttachment("userId",userInfo);
+
+ String userId = RpcContext.getContext().getAttachment("userId");
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
