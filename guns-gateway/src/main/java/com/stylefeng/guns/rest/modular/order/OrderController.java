@@ -4,6 +4,9 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
+import com.stylefeng.guns.alipay.AlipayAPI;
+import com.stylefeng.guns.alipay.vo.AliPayInfoVO;
+import com.stylefeng.guns.alipay.vo.AliPayResultVO;
 import com.stylefeng.guns.core.util.TokenBucket;
 import com.stylefeng.guns.order.OrderAPI;
 import com.stylefeng.guns.order.vo.OrderVO;
@@ -30,11 +33,13 @@ import java.util.List;
 public class OrderController {
 
     private static TokenBucket tokenBucket = new TokenBucket();
-
+    private static final String IMG_PNG = "http://www.maoyan.com";
     @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2018")
     OrderAPI orderAPI;
     @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2017")
     OrderAPI orderAPI2017;
+    @Reference(interfaceClass = AlipayAPI.class,check = false)
+    AlipayAPI alipayAPI;
 
 
     public ResponseEntity error(Integer fieldId,String soldSeats,String seatsName){
@@ -131,4 +136,42 @@ public class OrderController {
             return ResponseEntity.serviceFail("用户未登陆");
         }
     }
+
+    /**
+     * 获取订单二维码
+     * @param orderId
+     * @return
+     */
+    @PostMapping("getQRCode")
+    public ResponseEntity getQRCode(@RequestParam("orderId") String orderId) {
+        String userInfo = CurrentUser.getUserInfo();
+        if (userInfo == null || userInfo.trim().length() == 0) {
+            return ResponseEntity.serviceFail("用户未登陆，请登陆后再试");
+        }
+
+        AliPayInfoVO qrCode = alipayAPI.getQRCode(orderId);
+        return ResponseEntity.success(IMG_PNG,qrCode);
+    }
+
+    /**
+     * 获取订单状态
+     * @param orderId
+     * @param tryNums
+     * @return
+     */
+    @PostMapping("getPayResult")
+    public ResponseEntity getPayResult(@RequestParam("orderId") String orderId,@RequestParam("tryNums") Integer tryNums) {
+        String userInfo = CurrentUser.getUserInfo();
+        if (userInfo == null || userInfo.trim().length() == 0) {
+            return ResponseEntity.serviceFail("用户未登陆，请登陆后再试");
+        }
+
+        if (tryNums > 3) {
+            return ResponseEntity.serviceFail("支付超时失败");
+        }else {
+            AliPayResultVO orderStatus = alipayAPI.getOrderStatus(orderId);
+            return ResponseEntity.success(orderStatus);
+        }
+    }
+
 }

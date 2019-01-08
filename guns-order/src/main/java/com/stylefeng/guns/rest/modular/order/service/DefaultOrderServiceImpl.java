@@ -222,4 +222,44 @@ public class DefaultOrderServiceImpl implements OrderAPI {
             return soldSeatsByFieldId;
         }
     }
+
+    @Override
+    public OrderVO getOrderInfoById(String orderId) {
+        OrderVO orderInfoById = moocOrderTMapper.getOrderInfoById(orderId);
+        return orderInfoById;
+    }
+
+    /**
+     * 支付成功：1 支付失败：2 正在支付：0
+     * @param orderId
+     * @return
+     */
+
+    @Override
+    public boolean paySuccess(String orderId) {
+        MoocOrderT moocOrderT = new MoocOrderT();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(1);
+
+        Integer count = moocOrderTMapper.updateById(moocOrderT);
+        if (count >= 1) {
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean payFail(String orderId) {
+        MoocOrderT moocOrderT = new MoocOrderT();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(2);
+
+        Integer count = moocOrderTMapper.updateById(moocOrderT);
+        if (count >= 1) {
+            return true;
+        }else {
+            return false;
+        }
+    }
 }

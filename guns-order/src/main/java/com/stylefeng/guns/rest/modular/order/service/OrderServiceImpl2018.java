@@ -12,6 +12,7 @@ import com.stylefeng.guns.core.util.UUIDUtil;
 import com.stylefeng.guns.order.OrderAPI;
 import com.stylefeng.guns.order.vo.OrderVO;
 import com.stylefeng.guns.rest.common.persistence.dao.MoocOrder2018TMapper;
+import com.stylefeng.guns.rest.common.persistence.model.MoocOrder2017T;
 import com.stylefeng.guns.rest.common.persistence.model.MoocOrder2018T;
 import com.stylefeng.guns.rest.common.util.FTPUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -198,6 +199,47 @@ public class OrderServiceImpl2018 implements OrderAPI {
         }else{
             String soldSeatsByFieldId = moocOrder2018TMapper.getSoldSeatsByFieldId(fieldId);
             return soldSeatsByFieldId;
+        }
+    }
+
+
+    @Override
+    public OrderVO getOrderInfoById(String orderId) {
+        OrderVO orderInfoById = moocOrder2018TMapper.getOrderInfoById(orderId);
+        return orderInfoById;
+    }
+
+    /**
+     * 支付成功：1 支付失败：2 正在支付：0
+     * @param orderId
+     * @return
+     */
+
+    @Override
+    public boolean paySuccess(String orderId) {
+        MoocOrder2018T moocOrderT = new MoocOrder2018T();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(1);
+
+        Integer count = moocOrder2018TMapper.updateById(moocOrderT);
+        if (count >= 1) {
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean payFail(String orderId) {
+        MoocOrder2018T moocOrderT = new MoocOrder2018T();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(2);
+
+        Integer count = moocOrder2018TMapper.updateById(moocOrderT);
+        if (count >= 1) {
+            return true;
+        }else {
+            return false;
         }
     }
 }

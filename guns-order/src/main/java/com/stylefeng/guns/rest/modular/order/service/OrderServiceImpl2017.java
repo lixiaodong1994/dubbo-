@@ -13,6 +13,7 @@ import com.stylefeng.guns.order.OrderAPI;
 import com.stylefeng.guns.order.vo.OrderVO;
 import com.stylefeng.guns.rest.common.persistence.dao.MoocOrder2017TMapper;
 import com.stylefeng.guns.rest.common.persistence.model.MoocOrder2017T;
+import com.stylefeng.guns.rest.common.persistence.model.MoocOrderT;
 import com.stylefeng.guns.rest.common.util.FTPUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -198,6 +199,47 @@ public class OrderServiceImpl2017 implements OrderAPI {
         }else{
             String soldSeatsByFieldId = moocOrder2017TMapper.getSoldSeatsByFieldId(fieldId);
             return soldSeatsByFieldId;
+        }
+    }
+
+
+    @Override
+    public OrderVO getOrderInfoById(String orderId) {
+        OrderVO orderInfoById = moocOrder2017TMapper.getOrderInfoById(orderId);
+        return orderInfoById;
+    }
+
+    /**
+     * 支付成功：1 支付失败：2 正在支付：0
+     * @param orderId
+     * @return
+     */
+
+    @Override
+    public boolean paySuccess(String orderId) {
+        MoocOrder2017T moocOrderT = new MoocOrder2017T();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(1);
+
+        Integer count = moocOrder2017TMapper.updateById(moocOrderT);
+        if (count >= 1) {
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean payFail(String orderId) {
+        MoocOrder2017T moocOrderT = new MoocOrder2017T();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(2);
+
+        Integer count = moocOrder2017TMapper.updateById(moocOrderT);
+        if (count >= 1) {
+            return true;
+        }else {
+            return false;
         }
     }
 }
