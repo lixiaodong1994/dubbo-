@@ -2,6 +2,7 @@ package com.stylefeng.guns.rest.modular.service;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
+import com.alibaba.dubbo.rpc.RpcContext;
 import com.alipay.api.response.AlipayTradePrecreateResponse;
 import com.stylefeng.guns.alipay.AlipayAPI;
 import com.stylefeng.guns.alipay.vo.AliPayInfoVO;
@@ -32,7 +33,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Service(interfaceClass = AlipayAPI.class)
+@Service(interfaceClass = AlipayAPI.class,mock = "com.stylefeng.guns.alipay.AliPayServiceMock")
 public class DefaultAlipayServiceImpl implements AlipayAPI {
 
     @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2018")
@@ -91,9 +92,8 @@ public class DefaultAlipayServiceImpl implements AlipayAPI {
     @Override
     public AliPayResultVO getOrderStatus(String orderId) {
         // 看看是否有当前登陆人
-//        String userId = RpcContext.getContext().getAttachment("userId");
-//
-//        log.info("DefaultAlipayServiceImpl - getOrderStatus - userId = "+userId);
+        String userId = RpcContext.getContext().getAttachment("userId");
+        log.info("DefaultAlipayServiceImpl - getOrderStatus - userId = "+userId);
 
         // 获取订单支付状态
         boolean isSuccess = trade_query(orderId);

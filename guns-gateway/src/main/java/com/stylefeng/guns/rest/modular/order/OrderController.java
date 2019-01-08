@@ -1,6 +1,7 @@
 package com.stylefeng.guns.rest.modular.order;
 
 import com.alibaba.dubbo.config.annotation.Reference;
+import com.alibaba.dubbo.rpc.RpcContext;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
@@ -165,6 +166,9 @@ public class OrderController {
         if (userInfo == null || userInfo.trim().length() == 0) {
             return ResponseEntity.serviceFail("用户未登陆，请登陆后再试");
         }
+
+        //dubbo的隐式传递
+        RpcContext.getContext().setAttachment("userId",userInfo);
 
         if (tryNums > 3) {
             return ResponseEntity.serviceFail("支付超时失败");
