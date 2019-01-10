@@ -212,7 +212,7 @@ public class DefaultAlipayServiceImpl implements AlipayAPI {
                 AlipayTradePrecreateResponse response = result.getResponse();
 
                 // 需要修改为运行机器上的路径
-                filePath = String.format("D:/dong/education/ftpTest/qrcode/qr-%s.png",
+                filePath = String.format("/var/ftp/pub/temp/qr-%s.png",
                         response.getOutTradeNo());
                 String fileName = String.format("qr-%s.png",response.getOutTradeNo());
                 log.info("filePath:" + filePath);

@@ -35,11 +35,11 @@ public class OrderController {
 
     private static TokenBucket tokenBucket = new TokenBucket();
     private static final String IMG_PNG = "http://www.maoyan.com";
-    @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2018")
+    @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2018",filter = "tracing")
     OrderAPI orderAPI;
-    @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2017")
+    @Reference(interfaceClass = OrderAPI.class,check = false,group = "order2017",filter = "tracing")
     OrderAPI orderAPI2017;
-    @Reference(interfaceClass = AlipayAPI.class,check = false)
+    @Reference(interfaceClass = AlipayAPI.class,check = false,filter = "tracing")
     AlipayAPI alipayAPI;
 
 

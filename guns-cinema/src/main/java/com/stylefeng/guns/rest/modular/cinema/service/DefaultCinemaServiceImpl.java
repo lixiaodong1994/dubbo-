@@ -21,7 +21,7 @@ import java.util.List;
  * @Date 2018/12/28 20:44
  **/
 @Component
-@Service(interfaceClass = CinemaAPI.class,executes = 10)
+@Service(interfaceClass = CinemaAPI.class,executes = 10,filter = "tracing")
 public class DefaultCinemaServiceImpl implements CinemaAPI {
 
     @Autowired

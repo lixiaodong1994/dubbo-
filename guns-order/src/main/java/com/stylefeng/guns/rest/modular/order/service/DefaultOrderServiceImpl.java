@@ -31,7 +31,7 @@ import java.util.List;
  **/
 @Slf4j
 @Component
-@Service(interfaceClass = OrderAPI.class,executes = 10)
+@Service(interfaceClass = OrderAPI.class,executes = 10,filter = "tracing")
 public class DefaultOrderServiceImpl implements OrderAPI {
 
     @Autowired
@@ -39,7 +39,7 @@ public class DefaultOrderServiceImpl implements OrderAPI {
 
     @Autowired
     FTPUtil ftpUtil;
-    @Reference(interfaceClass = CinemaAPI.class,check = false)
+    @Reference(interfaceClass = CinemaAPI.class,check = false,filter = "tracing")
     CinemaAPI cinemaAPI;
     /**
      * 是否为真实的座位编号

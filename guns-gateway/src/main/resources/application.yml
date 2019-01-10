@@ -11,7 +11,7 @@ jwt:
   ignore-url: /user/register,/user/check,/film/getIndex,/film/getConditionList,/film/getFilms,/cinema/getCinemas,/cinema/getCondition,/cinema/getAreas,/cinema/getFieldInfo #配置忽略列表
 
 server:
-  port: 80 #项目端口
+  port: 8080 #项目端口
 
 mybatis-plus:
   mapper-locations: classpath*:com/stylefeng/guns/rest/**/mapping/*.xml
@@ -32,10 +32,10 @@ spring:
     name: metting-gateway
   dubbo:
     server: true
-    registry: zookeeper://localhost:2181
+    registry: zookeeper://192.168.56.200:2181
   datasource:
       #url: jdbc:mysql://127.0.0.1:3306/guns_rest?autoReconnect=true&useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull
-      url: jdbc:mysql://127.0.0.1:3306/guns_rest?zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&useSSL=false&failOverReadOnly=false
+      url: jdbc:mysql://192.168.56.200:3306/guns_rest?zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8&useSSL=false&failOverReadOnly=false
       username: root
       password: 123456
       filters: log4j,wall,mergeStat
