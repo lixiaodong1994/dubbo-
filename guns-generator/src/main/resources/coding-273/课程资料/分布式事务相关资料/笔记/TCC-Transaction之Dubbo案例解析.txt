@@ -1,0 +1,23 @@
+﻿1、需要提供分布式事务支持的接口上添加@Compensable
+2、在对应的接口实现上添加@Compensable
+3、在接口实现上添加confirmMethod、cancelMethod、transactionContextEditor
+4、实现对应的confirmMethod、cancelMethod
+	注意： confirm方法和cancel方法必须与try方法在同一个类中
+
+5、主事务的业务都已经实现的差不多的时候才调用子事务
+	
+	
+	
+	
+注意：
+	1、分布式事务里，不要轻易在业务层捕获所有异常	
+	2、使用TCC-Transaction时，confirm和cancel的幂等性需要自己代码支持
+	
+思考： 
+	为什么要在confirm、cancel里检查订单状态，而不直接修改为结束状态
+	因为confirm确认的就是刚刚try方法里新增的一个订单。
+	
+	-》 为了保证服务的幂等性
+	
+幂等性：使用相同参数对同一资源重复调用某个接口的结果与调用一次的结果相同
+

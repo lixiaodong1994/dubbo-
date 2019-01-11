@@ -1,0 +1,73 @@
+<dependency>
+    <groupId>org.mengyun</groupId>
+    <artifactId>tcc-transaction-dubbo</artifactId>
+    <version>1.2.4.23</version>
+</dependency>
+<dependency>
+    <groupId>org.mengyun</groupId>
+    <artifactId>tcc-transaction-spring</artifactId>
+    <version>1.2.4.23</version>
+</dependency>
+<dependency>
+    <groupId>org.mengyun</groupId>
+    <artifactId>tcc-transaction-core</artifactId>
+    <version>1.2.4.23</version>
+</dependency>
+<dependency>
+    <groupId>org.mengyun</groupId>
+    <artifactId>tcc-transaction-api</artifactId>
+    <version>1.2.4.23</version>
+</dependency>
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>druid</artifactId>
+    <version>1.1.12</version>
+</dependency>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>5.1.10</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-aop</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.quartz-scheduler</groupId>
+    <artifactId>quartz</artifactId>
+    <version>2.2.1</version>
+    <exclusions>
+        <exclusion>
+            <artifactId>slf4j-api</artifactId>
+            <groupId>org.slf4j</groupId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-context-support</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-jdbc</artifactId>
+</dependency>
+<dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+    <version>23.0</version>
+</dependency>
+<dependency>
+    <groupId>com.esotericsoftware</groupId>
+    <artifactId>kryo-shaded</artifactId>
+    <version>4.0.2</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-lang3</artifactId>
+    <version>3.8.1</version>
+</dependency>
+<dependency>
+    <groupId>com.alibaba</groupId>
+    <artifactId>fastjson</artifactId>
+    <version>1.2.51</version>
+</dependency>
